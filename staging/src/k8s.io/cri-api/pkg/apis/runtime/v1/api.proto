@@ -1708,13 +1708,13 @@ enum ContainerEventType {
 
 message ContainerTasksState {
     // Number of sleeping tasks
-    float64 sleeping_tasks = 0;
+    UInt64Value sleeping_tasks = 1;
     // Number of running tasks
-    float64 running_tasks = 1;
+    UInt64Value running_tasks = 2;
     // Number of stopped tasks
-    float64 stopped_tasks = 2;
+    UInt64Value stopped_tasks = 3;
     // Number of uninterruptible tasks
-    float64 uninterruptible_tasks = 3;
+    UInt64Value uninterruptible_tasks = 4;
     // Number of iowaiting tasks
-    float64 iowaiting_tasks = 4;
+    UInt64Value iowaiting_tasks = 5;
 }
