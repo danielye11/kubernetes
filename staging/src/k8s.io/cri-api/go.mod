@@ -1,6 +1,6 @@
 // This is a generated file. Do not edit directly.
 
-module https://github.com/danielye11/kubernetes/tree/cri-api/staging/src/k8s.io/cri-api
+module k8s.io/cri-api
 
 go 1.19
 
@@ -25,4 +25,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace https://github.com/danielye11/kubernetes/tree/cri-api/staging/src/k8s.io/cri-api => ../cri-api
+replace k8s.io/cri-api => ../cri-api
