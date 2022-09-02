@@ -239,6 +239,8 @@ func (p *criStatsProvider) listPodStatsStrictlyFromCRI(updateCPUNanoCoreUsage bo
 			klog.V(5).InfoS("Unable to find CRI stats for sandbox")
 			continue
 		}
+		klog.V(1).Infof("danielye: dump stat: %+v", criSandboxStat)
+
 		podSandbox, found := podSandboxMap[criSandboxStat.Attributes.Id]
 		if !found {
 			continue
