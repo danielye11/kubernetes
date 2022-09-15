@@ -1623,16 +1623,14 @@ message CpuUsage {
     UInt64Value cpu_cfs_throttled_periods_total = 5;
     // Total time duration the container has been throttled
     UInt64Value cpu_cfs_throttled_seconds_total = 6;
-    // Value of container cpu load average over the last 10 seconds
-    UInt64Value cpu_load_average_10s = 7;
     // Cumulative system cpu time consumed in seconds
-    UInt64Value cpu_system_seconds_total = 8;
+    UInt64Value cpu_system_seconds_total = 7;
     // Cumulative cpu time consumed in seconds
-    UInt64Value cpu_usage_seconds_total = 9;
+    UInt64Value cpu_usage_seconds_total = 8;
     // Cumulative user cpu time consumed in seconds
-    UInt64Value cpu_user_seconds_total = 10;
+    UInt64Value cpu_user_seconds_total = 9;
     // NUmber of tasks in a given state
-    ContainerTasksState tasks_state = 11;
+    ContainerTasksState tasks_state = 10;
 
 
 }
@@ -1653,6 +1651,12 @@ message MemoryUsage {
     UInt64Value page_faults = 6;
     // Cumulative number of major page faults.
     UInt64Value major_page_faults = 7;
+    //Number of bytes of page cache memory
+    UInt64Value memory_cache = 8;
+    //Number of memory usage hits limits
+    UInt64Value memory_failcnt = 9;
+    //Maximum memory usage recorded in bytes
+    UInt64Value max_usage_bytes = 10;
 }
 
 message ReopenContainerLogRequest {
