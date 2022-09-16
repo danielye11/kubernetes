@@ -708,14 +708,17 @@ message ProcessUsage {
     int64 timestamp = 1;
     // Number of processes.
     UInt64Value process_count = 2;
+}
+
+message ContainerProcessUsage {
     // Number of open file descriptors for the container
-    UInt64Value file_descriptor_count = 3;
+    UInt64Value file_descriptor_count = 1;
     // Number of open sockets for the container
-    UInt64Value socket_count = 4;
+    UInt64Value socket_count = 2;
     // Maximum number of threads allowed inside the container, infinity if value is zero
-    UInt64Value threads_max = 5;
+    UInt64Value threads_max = 3;
     // Number of threads running inside the container
-    UInt64Value threads_count = 6;
+    UInt64Value threads_count = 4;
 }
 
 // ImageSpec is an internal representation of an image.
@@ -1606,6 +1609,8 @@ message ContainerStats {
     MemoryUsage memory = 3;
     // Usage of the writable layer.
     FilesystemUsage writable_layer = 4;
+    //Usage of container processes
+    ContainerProcessUsage process = 5;
 }
 
 // CpuUsage provides the CPU usage information.
