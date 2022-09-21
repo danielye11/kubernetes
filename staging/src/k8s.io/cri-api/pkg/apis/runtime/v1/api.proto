@@ -1584,6 +1584,7 @@ message ContainerStatsFilter {
 message ListContainerStatsResponse {
     // Stats of the container.
     repeated ContainerStats stats = 1;
+    repeated Metric metrics = 2;
 }
 
 // ContainerAttributes provides basic information of the container.
@@ -1728,5 +1729,24 @@ message ContainerTasksState {
     UInt64Value uninterruptible_tasks = 4;
     // Number of iowaiting tasks
     UInt64Value iowaiting_tasks = 5;
+}
+
+message Metric {
+    repeated LabelPair label = 1;
+    repeated Gauge gauge = 2;
+    repeated int64 timestamp_ms = 3;
+    repeated MetricType type = 4;
+}
+
+message LabelPair {
+    repeated string name = 1;
+    repeated string value = 2;
+}
+enum MetricType {
+    COUNTER = 0;
+    GAUGE = 1;
+}
+message Gauge {
+    repeated double value = 1;
 }
 
