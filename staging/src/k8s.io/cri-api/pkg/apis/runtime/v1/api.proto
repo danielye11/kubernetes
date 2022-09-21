@@ -711,14 +711,16 @@ message ProcessUsage {
 }
 
 message ContainerProcessUsage {
+    // Timestamp in nanoseconds at which the information were collected. Must be > 0.
+    int64 timestamp = 1;
     // Number of open file descriptors for the container
-    UInt64Value file_descriptor_count = 1;
+    UInt64Value file_descriptor_count = 2;
     // Number of open sockets for the container
-    UInt64Value socket_count = 2;
+    UInt64Value socket_count = 3;
     // Maximum number of threads allowed inside the container, infinity if value is zero
-    UInt64Value threads_max = 3;
+    UInt64Value threads_max = 4;
     // Number of threads running inside the container
-    UInt64Value threads_count = 4;
+    UInt64Value threads_count = 5;
 }
 
 // ImageSpec is an internal representation of an image.
@@ -1727,3 +1729,4 @@ message ContainerTasksState {
     // Number of iowaiting tasks
     UInt64Value iowaiting_tasks = 5;
 }
+
