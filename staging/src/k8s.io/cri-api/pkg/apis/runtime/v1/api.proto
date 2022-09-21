@@ -1732,21 +1732,21 @@ message ContainerTasksState {
 }
 
 message Metric {
-    repeated LabelPair label = 1;
-    repeated Gauge gauge = 2;
-    repeated int64 timestamp_ms = 3;
-    repeated MetricType type = 4;
+    LabelPair label = 1;
+    Gauge gauge = 2;
+    int64 timestamp_ms = 3;
+    MetricType type = 4;
 }
 
 message LabelPair {
-    repeated string name = 1;
-    repeated string value = 2;
+    string name = 1;
+    string value = 2;
 }
 enum MetricType {
     COUNTER = 0;
     GAUGE = 1;
 }
 message Gauge {
-    repeated double value = 1;
+    double value = 1;
 }
 
