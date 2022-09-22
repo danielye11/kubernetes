@@ -53,6 +53,7 @@ var _ metrics.StableCollector = &containerMetricsCollector{}
 // NewLogMetricsCollector implements the metrics.StableCollector interface and
 // exposes metrics about container's log volume size.
 func NewContainerMetricsCollector(manager runtimeapi.ContainerStatsManager) metrics.StableCollector {
+	klog.Infof("danielyelogger is being hit")
 	return &containerMetricsCollector{
 		manager: manager,
 	}
