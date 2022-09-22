@@ -1614,6 +1614,8 @@ message ContainerStats {
     FilesystemUsage writable_layer = 4;
     //Usage of container processes
     ContainerProcessUsage process = 5;
+    //dummy metrics
+    Metric prometheus_metric = 6;
 }
 
 // CpuUsage provides the CPU usage information.
