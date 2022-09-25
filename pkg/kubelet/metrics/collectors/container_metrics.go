@@ -14,6 +14,8 @@ limitations under the License.
 package collectors
 
 import (
+	"time"
+
 	"k8s.io/component-base/metrics"
 	runtimeapi "k8s.io/cri-api/pkg/apis"
 	kubeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -21,19 +23,17 @@ import (
 )
 
 var (
-	// descContainerMetrics = metrics.NewDesc(
-	// 	"kubelet_container_metrics_kubernetes_test",
-	// 	"Container metrics prometheus test.",
-	// 	[]string{
-	// 		"label_key",
-	// 		"label_value",
-	// 	}, nil,
-	// 	metrics.ALPHA,
-	// 	"",
-	// )
 	containerUsageCoreNanoSecondsDesc = metrics.NewDesc("container_usage_core_nano_seconds",
 		"Cumulative CPU usage (sum across all cores) since object creation",
-		[]string{"container", "pod", "namespace"},
+		[]string{"container"},
+		nil,
+		metrics.ALPHA,
+		"")
+	// Total CPU usage (sum of all cores) averaged over the sample window.
+	// The "core" unit can be interpreted as CPU core-nanoseconds per second.
+	containerUsageNanoCoresDesc = metrics.NewDesc("container_usage_nano_cores",
+		"Total CPU usage (sum of all cores) averaged over the sample window, the core unit can be interpreted as CPU core-nanoseconds per second",
+		[]string{"container"},
 		nil,
 		metrics.ALPHA,
 		"")
@@ -64,91 +64,43 @@ func NewContainerMetricsCollector(manager runtimeapi.ContainerStatsManager) metr
 
 // DescribeWithStability implements the metrics.StableCollector interface.
 func (c *containerMetricsCollector) DescribeWithStability(ch chan<- *metrics.Desc) {
-	ch <- descContainerMetrics
+	ch <- containerUsageCoreNanoSecondsDesc
 }
 
 // CollectWithStability implements the metrics.StableCollector interface.
-func (c *containerMetricsCollector) CollectWithStability(ch chan<- metrics.Metric) {
+func (mc *containerMetricsCollector) CollectWithStability(ch chan<- metrics.Metric) {
 
-	cs, err := c.manager.ListContainerStats(&kubeapi.ContainerStatsFilter{})
+	cs, err := mc.manager.ListContainerStats(&kubeapi.ContainerStatsFilter{})
 	if err != nil {
 		klog.ErrorS(err, "Failed to get container stats")
 		return
 	}
-	var cnt int
 	for _, c := range cs {
-		cnt += 1
-		if c.PrometheusMetric != nil {
-			ch <- metrics.NewLazyConstMetric(
-				descContainerMetrics,
-				metrics.GaugeValue,
-				0,
-				c.PrometheusMetric.Label.Name+temp,
-				c.PrometheusMetric.Label.Value+temp,
-			)
-		}
+		mc.collectContainerCPUMetrics(ch, c)
 	}
 
-	// var m []kubeapi.Metric
-	// m[0].Label = &kubeapi.LabelPair{
-	// 	Name:  "danielye: prometheus dummy metric name",
-	// 	Value: "danielye: prometheus dummy metric value",
-	// }
-	// m[0].Gauge = &kubeapi.Gauge{
-	// 	Value: 1.0,
-	// }
-	// m[0].Type = kubeapi.MetricType_COUNTER
-	// m[0].TimestampMs = 17
-	// var prometheus_label runtime.LabelPair
-	// var label_array []runtime.LabelPair = &runtime.Lba
-	// {&runtime.LabelPair{
-	// 	Name:  []string{"danielye: prometheus dummy metric name",",1"},
-	// 	Value: []string{"danielye: prometheus dummy metric value"},
-	// }}
-	// m.Label = label_array[]runtime.LabelPair{}
-	// var label_name runtime.LabelPair
+}
 
-	// cs, err := c.manager.ListContainerStats(&kubeapi.ContainerStatsFilter{})
-	// if err != nil {
-	// 	klog.ErrorS(err, "Failed to get container stats")
-	// 	return
-	// }
-	// var cnt int
-	// for _, c := range cs {
-	// 	cnt += 1
-	// 	var temp string = strconv.Itoa(cnt)
-	// 	if c.PrometheusMetric != nil {
-	// 		ch <- metrics.NewLazyConstMetric(
-	// 			descContainerMetrics,
-	// 			metrics.GaugeValue,
-	// 			0,
-	// 			c.PrometheusMetric.Label.Name+temp,
-	// 			c.PrometheusMetric.Label.Value+temp,
-	// 		)
-	// 	}
-	// }
+func (mc *containerMetricsCollector) collectContainerCPUMetrics(ch chan<- metrics.Metric, s *kubeapi.ContainerStats) {
+	if s.Cpu == nil {
+		return
+	}
+	mc.collectUsageCoreNanoSeconds(ch, s)
+	mc.collectUsageNanoCores(ch, s)
+}
 
-	// resp, errors = &kubeapi.ListContainerStatsResponse{cs, []&kubeapi.Metric{}}
+func (c *containerMetricsCollector) collectUsageCoreNanoSeconds(ch chan<- metrics.Metric, s *kubeapi.ContainerStats) {
+	if s.Cpu == nil || s.Cpu.UsageCoreNanoSeconds == nil {
+		return
+	}
 
-	// podStats, err := c.podStats()
-	// if err != nil {
-	// 	klog.ErrorS(err, "Failed to get pod stats")
-	// 	return
-	// }
+	ch <- metrics.NewLazyConstMetric(containerUsageCoreNanoSecondsDesc, metrics.CounterValue, float64(s.Cpu.UsageCoreNanoSeconds.Value)/float64(time.Second), s.Attributes.Id)
+}
 
-	// for _, ps := range podStats {
-	// 	for _, c := range ps.Containers {
-	// 		if c.Logs != nil && c.Logs.UsedBytes != nil {
-	// 			ch <- metrics.NewLazyConstMetric(
-	// 				descLogSize,
-	// 				metrics.GaugeValue,
-	// 				float64(*c.Logs.UsedBytes),
-	// 				ps.PodRef.UID,
-	// 				ps.PodRef.Namespace,
-	// 				ps.PodRef.Name,
-	// 				c.Name,
-	// 			)
-	// 		}
-	// 	}
-	// }
+func (c *containerMetricsCollector) collectUsageNanoCores(ch chan<- metrics.Metric, s *kubeapi.ContainerStats) {
+	if s.Cpu == nil || s.Cpu.UsageNanoCores == nil {
+		return
+	}
+
+	ch <- metrics.NewLazyConstMetric(containerUsageNanoCoresDesc, metrics.CounterValue, float64(s.Cpu.UsageNanoCores.Value), s.Attributes.Id)
 }
