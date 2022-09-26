@@ -31,12 +31,12 @@ var (
 		"")
 	// Total CPU usage (sum of all cores) averaged over the sample window.
 	// The "core" unit can be interpreted as CPU core-nanoseconds per second.
-	// containerUsageNanoCoresDesc = metrics.NewDesc("container_usage_nano_cores",
-	// 	"Total CPU usage (sum of all cores) averaged over the sample window, the core unit can be interpreted as CPU core-nanoseconds per second",
-	// 	[]string{"container"},
-	// 	nil,
-	// 	metrics.ALPHA,
-	// 	"")
+	containerUsageNanoCoresDesc = metrics.NewDesc("container_usage_nano_cores",
+		"Total CPU usage (sum of all cores) averaged over the sample window, the core unit can be interpreted as CPU core-nanoseconds per second",
+		[]string{"container"},
+		nil,
+		metrics.ALPHA,
+		"")
 )
 
 type containerMetricsCollector struct {
@@ -65,6 +65,7 @@ func NewContainerMetricsCollector(manager runtimeapi.ContainerStatsManager) metr
 // DescribeWithStability implements the metrics.StableCollector interface.
 func (c *containerMetricsCollector) DescribeWithStability(ch chan<- *metrics.Desc) {
 	ch <- containerUsageCoreNanoSecondsDesc
+	ch <- containerUsageNanoCoresDesc
 }
 
 // CollectWithStability implements the metrics.StableCollector interface.
@@ -76,18 +77,20 @@ func (mc *containerMetricsCollector) CollectWithStability(ch chan<- metrics.Metr
 		return
 	}
 	for _, c := range cs {
-		mc.collectUsageCoreNanoSeconds(ch, c)
+		mc.collectContainerCPUMetrics(ch, c)
+		// mc.collectUsageCoreNanoSeconds(ch, c)
+		// mc.collectUsageNanoCores(ch, c)
 	}
 
 }
 
-// func (mc *containerMetricsCollector) collectContainerCPUMetrics(ch chan<- metrics.Metric, s *kubeapi.ContainerStats) {
-// 	if s.Cpu == nil {
-// 		return
-// 	}
-// 	mc.collectUsageCoreNanoSeconds(ch, s)
-// 	mc.collectUsageNanoCores(ch, s)
-// }
+func (mc *containerMetricsCollector) collectContainerCPUMetrics(ch chan<- metrics.Metric, s *kubeapi.ContainerStats) {
+	if s.Cpu == nil {
+		return
+	}
+	mc.collectUsageCoreNanoSeconds(ch, s)
+	mc.collectUsageNanoCores(ch, s)
+}
 
 func (c *containerMetricsCollector) collectUsageCoreNanoSeconds(ch chan<- metrics.Metric, s *kubeapi.ContainerStats) {
 	if s.Cpu == nil || s.Cpu.UsageCoreNanoSeconds == nil {
@@ -97,10 +100,10 @@ func (c *containerMetricsCollector) collectUsageCoreNanoSeconds(ch chan<- metric
 	ch <- metrics.NewLazyConstMetric(containerUsageCoreNanoSecondsDesc, metrics.CounterValue, float64(s.Cpu.UsageCoreNanoSeconds.Value)/float64(time.Second), s.Attributes.Id)
 }
 
-// func (c *containerMetricsCollector) collectUsageNanoCores(ch chan<- metrics.Metric, s *kubeapi.ContainerStats) {
-// 	if s.Cpu == nil || s.Cpu.UsageNanoCores == nil {
-// 		return
-// 	}
+func (c *containerMetricsCollector) collectUsageNanoCores(ch chan<- metrics.Metric, s *kubeapi.ContainerStats) {
+	if s.Cpu == nil || s.Cpu.UsageNanoCores == nil {
+		return
+	}
 
-// 	ch <- metrics.NewLazyConstMetric(containerUsageNanoCoresDesc, metrics.CounterValue, float64(s.Cpu.UsageNanoCores.Value), s.Attributes.Id)
-// }
+	ch <- metrics.NewLazyConstMetric(containerUsageNanoCoresDesc, metrics.CounterValue, float64(s.Cpu.UsageNanoCores.Value), s.Attributes.Id)
+}
