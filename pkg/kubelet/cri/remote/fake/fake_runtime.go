@@ -336,3 +336,13 @@ func (f *RemoteRuntime) CheckpointContainer(ctx context.Context, req *kubeapi.Ch
 func (f *RemoteRuntime) GetContainerEvents(req *kubeapi.GetEventsRequest, ces kubeapi.RuntimeService_GetContainerEventsServer) error {
 	return nil
 }
+
+// ListPodSandboxStats returns stats of all running pods.
+func (f *RemoteRuntime) ListPodSandboxMetrics(ctx context.Context, req *kubeapi.ListPodSandboxMetricsRequest) (*kubeapi.ListPodSandboxMetricsResponse, error) {
+	stats, err := f.RuntimeService.ListPodSandboxMetrics(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &kubeapi.ListPodSandboxMetricsResponse{Stats: stats}, nil
+}

@@ -1231,3 +1231,22 @@ func (r *remoteRuntimeService) CheckpointContainer(options *runtimeapi.Checkpoin
 func (r *remoteRuntimeService) GetContainerEvents(containerEventsCh chan *runtimeapi.ContainerEventResponse) error {
 	return nil
 }
+
+// ListPodSandboxStats returns the list of pod sandbox stats given the filter
+func (r *remoteRuntimeService) ListPodSandboxMetrics(filter *runtimeapi.PodSandboxStatsFilter) ([]*runtimeapi.PodSandboxStats, error) {
+	klog.V(10).InfoS("[RemoteRuntimeService] ListPodSandboxStats", "filter", filter)
+	// Set timeout, because runtimes are able to cache disk stats results
+	ctx, cancel := getContextWithTimeout(r.timeout)
+	defer cancel()
+
+	resp, err := r.runtimeClient.ListPodSandboxStats(ctx, &runtimeapi.ListPodSandboxStatsRequest{
+		Filter: filter,
+	})
+	if err != nil {
+		klog.ErrorS(err, "ListPodSandboxStats with filter from runtime service failed", "filter", filter)
+		return nil, err
+	}
+	klog.V(10).InfoS("[RemoteRuntimeService] ListPodSandboxStats Response", "filter", filter, "stats", resp.GetStats())
+
+	return resp.GetStats(), nil
+}
