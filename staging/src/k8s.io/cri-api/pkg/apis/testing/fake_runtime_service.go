@@ -63,11 +63,13 @@ type FakeRuntimeService struct {
 	Called []string
 	Errors map[string][]error
 
-	FakeStatus          *runtimeapi.RuntimeStatus
-	Containers          map[string]*FakeContainer
-	Sandboxes           map[string]*FakePodSandbox
-	FakeContainerStats  map[string]*runtimeapi.ContainerStats
-	FakePodSandboxStats map[string]*runtimeapi.PodSandboxStats
+	FakeStatus                                                              *runtimeapi.RuntimeStatus
+	Containers                                                              map[string]*FakeContainer
+	Sandboxes                                                               map[string]*FakePodSandbox
+	FakeContainerStats                                                      map[string]*runtimeapi.ContainerStats
+	FakePodSandboxStats                                                     map[string]*runtimeapi.PodSandboxStats
+	FakePodSandboxMetrics                           					map[string]*runtimeapi.PodSandboxMetrics
+	FakePodContainerMetrics 										map[string]*runtimeapi.ContainerMetrics
 
 	ErrorOnSandboxCreate bool
 }
@@ -158,6 +160,9 @@ func NewFakeRuntimeService() *FakeRuntimeService {
 		Sandboxes:           make(map[string]*FakePodSandbox),
 		FakeContainerStats:  make(map[string]*runtimeapi.ContainerStats),
 		FakePodSandboxStats: make(map[string]*runtimeapi.PodSandboxStats),
+		FakePodSandboxMetrics: make(map[string]*runtimeapi.PodSandboxMetrics),
+		FakePodContainerMetrics make(map[string]*runtimeapi.ContainerMetrics),
+		
 	}
 }
 
@@ -712,3 +717,54 @@ func (r *FakeRuntimeService) CheckpointContainer(options *runtimeapi.CheckpointC
 func (f *FakeRuntimeService) GetContainerEvents(containerEventsCh chan *runtimeapi.ContainerEventResponse) error {
 	return nil
 }
+
+// SetFakePodSandboxMetrics sets the fake pod sandbox stats in the FakeRuntimeService.
+func (r *FakeRuntimeService) SetFakePodSandboxMetrics(podStats []*runtimeapi.PodSandboxMetrics) {
+	r.Lock()
+	defer r.Unlock()
+
+	r.FakePodSandboxMetrics = make(map[string]*runtimeapi.PodSandboxMetrics)
+	for _, s := range podStats {
+		r.FakePodSandboxMetrics[s.Attributes.Id] = s
+	}
+}
+
+// PodSandboxMetrics returns the sandbox stats in the FakeRuntimeService.
+func (r *FakeRuntimeService) PodSandboxMetrics(podSandboxID string) (*runtimeapi.PodSandboxMetrics, error) {
+	r.Lock()
+	defer r.Unlock()
+
+	r.Called = append(r.Called, "PodSandboxMetrics")
+	if err := r.popError("PodSandboxMetrics"); err != nil {
+		return nil, err
+	}
+
+	s, found := r.FakePodSandboxMetrics[podSandboxID]
+	if !found {
+		return nil, fmt.Errorf("no metrics for pod sandbox %q", podSandboxID)
+	}
+	return s, nil
+}
+
+// ListPodSandboxMetrics returns the list of all pod sandbox stats given the filter in the FakeRuntimeService.
+func (r *FakeRuntimeService) ListPodSandboxMetrics() ([]*runtimeapi.PodSandboxMetrics, error) {
+	r.Lock()
+	defer r.Unlock()
+
+	r.Called = append(r.Called, "ListPodSandboxMetrics")
+	if err := r.popError("ListPodSandboxMetrics"); err != nil {
+		return nil, err
+	}
+
+	var result []*runtimeapi.Metrics
+	for _, sb := range r.Sandboxes {
+		s, found := r.FakePodSandboxMetrics[sb.Id]
+		if !found {
+			continue
+		}
+		result = append(result, s)
+	}
+
+	return result, nil
+}
+
