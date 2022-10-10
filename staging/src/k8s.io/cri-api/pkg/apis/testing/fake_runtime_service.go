@@ -745,7 +745,7 @@ func (r *FakeRuntimeService) PodSandboxMetrics(podSandboxID string) (*runtimeapi
 	return s, nil
 }
 
-// ListPodSandboxMetrics returns the list of all pod sandbox stats given the filter in the FakeRuntimeService.
+// ListPodSandboxMetrics returns the list of all pod sandbox metrics given the filter in the FakeRuntimeService, additional CPU, memory, process stats
 func (r *FakeRuntimeService) ListPodSandboxMetrics() ([]*runtimeapi.PodSandboxMetrics, error) {
 	r.Lock()
 	defer r.Unlock()
